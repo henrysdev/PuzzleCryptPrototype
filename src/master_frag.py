@@ -1,6 +1,7 @@
 import sys
 import cryptographics
 
+
 # test reassembly
 def reassemble_frags(ordered_frags):
     reassembly_bytes = b''
@@ -9,24 +10,24 @@ def reassemble_frags(ordered_frags):
         reassembly_bytes += frag
     return reassembly_bytes
 
-
-def HMAC(ciphered_piece, seqID, secret_key):
+# create and append a SHA256 HMAC for authentication
+def HMAC(cipher_piece, seqID, secret_key):
     hmac = cryptographics.SHA256(bytes(secret_key + seqID))
-    ciph_n_hash = ciphered_piece + hmac
+    ciph_n_hash = cipher_piece + hmac
     return ciph_n_hash
 
-
+# encrypt a piece
 def encrypt_piece(piece, secret_key):
     crypt = cryptographics.AESCipher(secret_key)
-    cipher_piece = crypt.encrypt(piece)
+    cipher_piece = crypt.encrypt(str(piece))
     return cipher_piece
 
-
+# prepare pieces to be distributed via encryption and HMAC
 def prepare_pieces(pieces, secret_key):
     secured_pieces = []
     for i in range(0, len(pieces)):
-        ciphered = encrypt_piece(pieces[i], secret_key)
-        ciph_n_hash = HMAC(ciphered_piece, secret_key)
+        cipher_piece = encrypt_piece(pieces[i], secret_key)
+        ciph_n_hash = HMAC(cipher_piece, str(i), secret_key)
         secured_pieces.append(ciph_n_hash)
     return secured_pieces
 
@@ -61,12 +62,13 @@ def demo(argv):
     # arguments
     path = argv[1]
     n = int(argv[2])
+    secret_key = cryptographics.generate_key(16)
     # read in file
     file_bytes = read_in_file(path)
-    # fragment 
+    # fragment
     pieces = fragment_file(file_bytes, n)
     # reassemble test
-    secure_pieces = prepare_pieces(pieces)
+    ready_pieces = prepare_pieces(pieces, secret_key)
 
 def validate_arguments(argv):
     # check for correct commandline arguments before advancing to demo logic

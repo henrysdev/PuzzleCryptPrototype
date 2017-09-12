@@ -2,6 +2,8 @@ import base64
 from Crypto.Cipher import AES
 from Crypto import Random
 import hashlib
+import random
+import string
 
 
 BS = 16
@@ -27,17 +29,8 @@ class AESCipher:
         cipher = AES.new(self.key, AES.MODE_CBC, iv )
         return unpad(cipher.decrypt( enc[16:] ))
 
-class SHA256:
-    def __init__( self, input_data ):
-        self.input_data = input_data
-        return hashlib.sha256(base64.b64encode(self.input_data)).hexdigest()
-        
-"""
-mycipher = AESCipher("passcode")
-encr_msg = mycipher.encrypt("MY MESSAGE")
-print(encr_msg)
-decr_msg = mycipher.decrypt(encr_msg)
-print(decr_msg)
-hashed_str = hashlib.sha256("my passcode".encode('utf-8')).hexdigest()
-print(hashed_str)
-"""
+def SHA256( input_data ):
+    return hashlib.sha256(base64.b64encode(input_data)).hexdigest()
+
+def generate_key( size=16 ):
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(size))
