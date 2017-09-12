@@ -1,5 +1,8 @@
 import sys
 
+def test_reassembly(orig_file, frags):
+    return
+
 def read_in_file(path_to_orig_file, n):
     with open(path_to_orig_file, 'r+b') as f:
         read_data = f.read()
