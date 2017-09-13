@@ -41,7 +41,7 @@ def subdivide_file(file_bytes, n):
     pieces.append(bytes(file_bytes[0:frag_size]))
     for i in range(1,n-1):
         pieces.append(bytes(file_bytes[frag_size*i:(frag_size*(i+1))]))
-    pieces.append(bytes(file_bytes[frag_size*i:]))
+    pieces.append(bytes(file_bytes[frag_size*(i+1):]))
 
     return pieces
 
@@ -76,9 +76,6 @@ def partition_file(argv):
     # reassemble test
     fragments = prepare_pieces(file_pieces, secret_key)
 
-    for piece in fragments:
-        print('\n{}'.format(piece))
-
     output_fragments(fragments)
 
 
@@ -93,7 +90,7 @@ def authenticate_fragments(fragments):
 
 
 def reassemble(argv):
-    secret_key = "WO78TLLX3K4WQRTF" #DEBUG KEY
+    secret_key = "V5ZHJSAWENPO3W6N" #DEBUG KEY
     # argument handling
     success_fpath = argv[1]
     fragments = []
@@ -107,7 +104,6 @@ def reassemble(argv):
     hmac_dict = authenticate_fragments(fragments)
 
     retrieved_pieces = []
-    #retrieved_file = b''
     n = len(fragments)
     for i in range(0,n):
         next_frag = HMAC(secret_key, i)
@@ -115,16 +111,15 @@ def reassemble(argv):
             aes_cipher = cryptographics.AESCipher(secret_key)
             try:
                 retrieved_pieces.append(aes_cipher.decrypt(hmac_dict[next_frag]))
-                #retrieved_file += aes_cipher.decrypt(hmac_dict[next_frag])
             except:
                 print("Decryption failed. Aborting.")
                 exit()
         else:
             print("Authentication failed. Aborting")
+            exit()
     reassembled_file = b''.join(retrieved_pieces)
-    #reassembled_file = retrieved_file
 
-    print("successful")
+    print("Successful")
 
     with open("RASM_FOLDER/reassembled_file.txt", 'wb') as f:
         f.write(reassembled_file)
