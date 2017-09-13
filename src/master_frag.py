@@ -1,25 +1,13 @@
 import sys
-import base64
+import os
 import cryptographics
 
 
-# test reassembly
-def reassemble_frags(ordered_frags):
-    reassembly_bytes = b''
-    for frag in ordered_frags:
-        print(len(frag))
-        reassembly_bytes += frag
-
-    return reassembly_bytes
-
-
 # create and append a SHA256 HMAC for authentication
-def HMAC(cipher_piece, seqID, secret_key):
-    cat_input = bytes((secret_key + seqID).encode('utf-8'))
+def HMAC(secret_key, seqID):
+    cat_input = bytes((secret_key + str(seqID)).encode('utf-8'))
     hmac = cryptographics.SHA256(cat_input)
-    ciph_n_hash = cipher_piece + hmac.encode('utf-8')
-    #print("ciph_n_hash: {} ({}) length: {}".format(ciph_n_hash, type(ciph_n_hash), len(ciph_n_hash)))
-    return ciph_n_hash
+    return hmac.encode('utf-8')
 
 
 # encrypt a piece
@@ -35,7 +23,7 @@ def prepare_pieces(pieces, secret_key):
     secured_pieces = []
     for i in range(0, len(pieces)):
         cipher_piece = encrypt_piece(pieces[i], secret_key)
-        ciph_n_hash = HMAC(cipher_piece, str(i), secret_key)
+        ciph_n_hash = cipher_piece + HMAC(secret_key, i)
         secured_pieces.append(ciph_n_hash)
 
     return secured_pieces
@@ -61,7 +49,7 @@ def subdivide_file(file_bytes, n):
 
 # target file into binary string
 def read_in_file(path_to_orig_file):
-    with open(path_to_orig_file, 'r+b') as f:
+    with open(path_to_orig_file, 'rb') as f:
         file_bytes = f.read()
     # must delete file after splitting
     f.close()
@@ -77,11 +65,12 @@ def output_fragments(fragments):
         f.close()
 
 # main controller loop
-def demo(argv):
+def partition_file(argv):
     # arguments
     path = argv[1]
     n = int(argv[2])
     secret_key = cryptographics.generate_key(16)
+    print("SECRET KEY: {}".format(secret_key))
     # read in file
     file_bytes = read_in_file(path)
     # fragment
@@ -95,19 +84,71 @@ def demo(argv):
     output_fragments(fragments)
 
 
+def authenticate_fragments(fragments):
+    hmac_dict = {}
+    for frag in fragments:
+        payload = frag[:-64]
+        hmac = frag[-64:]
+        hmac_dict[hmac] = payload
+
+    return hmac_dict
+
+
+def reassemble(argv):
+    secret_key = "1PPKT5BPMA3LVB4M" #DEBUG KEY
+    # argument handling
+    success_fpath = argv[1]
+    fragments = []
+    if_path = "OUT_FOLDER/"
+    frag_names = os.listdir(if_path)
+    for name in frag_names:
+        with open(if_path + name, 'rb') as f:
+            read_fragment = f.read()
+        f.close()
+        fragments.append(read_fragment)
+    hmac_dict = authenticate_fragments(fragments)
+    print(hmac_dict)
+
+    retrieved_pieces = []
+    #retrieved_file = b''
+    n = len(fragments)
+    for i in range(0,n):
+        next_frag = HMAC(secret_key, i)
+        if next_frag in hmac_dict:
+            aes_cipher = cryptographics.AESCipher(secret_key)
+            try:
+                retrieved_pieces.append(aes_cipher.decrypt(hmac_dict[next_frag]))
+                #retrieved_file += aes_cipher.decrypt(hmac_dict[next_frag])
+            except:
+                print("Decryption failed. Aborting.")
+                exit()
+        else:
+            print("Authentication failed. Aborting")
+    reassembled_file = b''.join(retrieved_pieces)
+    #reassembled_file = retrieved_file
+
+    print("successful")
+
+    with open("RASM_FOLDER/reassembled_file.txt", 'wb') as f:
+        f.write(reassembled_file)
+    f.close()
+
+
 def validate_arguments(argv):
     # check for correct commandline arguments before advancing to demo logic
-    if len(argv) != 3:
+    if len(argv) != 2 and len(argv) != 3:
         print("Incorrect number of arguments. Format:")
         print("<path_to_file_to_frag> <number_of_fragments>")
         exit()
+    elif len(argv) == 2:
+        reassemble(argv)
     elif len(argv) == 3:
         try:
             int(argv[2])
         except ValueError:
             print("Incorrect type of arguments. Format:")
             print("<(string) path_to_file_to_frag> <(int) number_of_fragments>")
-    demo(argv)
+        partition_file(argv)
 
 
 if __name__ == "__main__":
