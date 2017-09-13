@@ -1,19 +1,22 @@
 import sys
 import os
 import cryptographics
+# DEBUG modules
+import time
 
 
 # create and append a SHA256 HMAC for authentication
 def HMAC(secret_key, seqID):
     cat_input = bytes((secret_key + str(seqID)).encode('utf-8'))
     hmac = cryptographics.SHA256(cat_input)
+
     return hmac.encode('utf-8')
 
 
 # encrypt a piece
 def encrypt_piece(piece, secret_key):
     crypt = cryptographics.AESCipher(secret_key)
-    cipher_piece = crypt.encrypt(str(piece))
+    cipher_piece = crypt.encrypt(piece)
 
     return cipher_piece
 
@@ -32,18 +35,13 @@ def prepare_pieces(pieces, secret_key):
 # split byte array into n equal-sized pieces
 def subdivide_file(file_bytes, n):
     total_size = len(file_bytes)
-    frag_size = (total_size - (total_size % n)) / n
+    frag_size = int((total_size - (total_size % n)) / n)
     pieces = []
-    pieces.append(b'')
-    i = 0 # iterator position in string
-    p = 1 # current piece
-    while i < len(file_bytes):
-        if p < n and i >= frag_size * p:
-            pieces.append(file_bytes[i:(i+1)])
-            p+=1
-        else:
-            pieces[p-1] += file_bytes[i:(i+1)]
-        i+=1
+
+    pieces.append(bytes(file_bytes[0:frag_size]))
+    for i in range(1,n-1):
+        pieces.append(bytes(file_bytes[frag_size*i:(frag_size*(i+1))]))
+    pieces.append(bytes(file_bytes[frag_size*i:]))
 
     return pieces
 
@@ -95,7 +93,7 @@ def authenticate_fragments(fragments):
 
 
 def reassemble(argv):
-    secret_key = "1PPKT5BPMA3LVB4M" #DEBUG KEY
+    secret_key = "WO78TLLX3K4WQRTF" #DEBUG KEY
     # argument handling
     success_fpath = argv[1]
     fragments = []
@@ -107,7 +105,6 @@ def reassemble(argv):
         f.close()
         fragments.append(read_fragment)
     hmac_dict = authenticate_fragments(fragments)
-    print(hmac_dict)
 
     retrieved_pieces = []
     #retrieved_file = b''
@@ -153,4 +150,3 @@ def validate_arguments(argv):
 
 if __name__ == "__main__":
     validate_arguments(sys.argv)
-    
