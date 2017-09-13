@@ -13,7 +13,7 @@ def HMAC(secret_key, seqID):
 # encrypt a piece
 def encrypt_piece(piece, secret_key):
     crypt = cryptographics.AESCipher(secret_key)
-    cipher_piece = crypt.encrypt(str(piece))
+    cipher_piece = crypt.encrypt(str(piece, 'utf-8'))
 
     return cipher_piece
 
@@ -95,7 +95,7 @@ def authenticate_fragments(fragments):
 
 
 def reassemble(argv):
-    secret_key = "1PPKT5BPMA3LVB4M" #DEBUG KEY
+    secret_key = "T6XR45VLD5F6IE74" #DEBUG KEY
     # argument handling
     success_fpath = argv[1]
     fragments = []
@@ -107,7 +107,6 @@ def reassemble(argv):
         f.close()
         fragments.append(read_fragment)
     hmac_dict = authenticate_fragments(fragments)
-    print(hmac_dict)
 
     retrieved_pieces = []
     #retrieved_file = b''
@@ -153,4 +152,3 @@ def validate_arguments(argv):
 
 if __name__ == "__main__":
     validate_arguments(sys.argv)
-    
