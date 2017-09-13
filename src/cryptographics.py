@@ -30,7 +30,7 @@ class AESCipher:
         return unpad(cipher.decrypt( enc[16:] ))
 
 def SHA256( input_data ):
-    return hashlib.sha256(base64.b64encode(input_data)).hexdigest()
+    return hashlib.sha256(input_data).hexdigest()
 
 def generate_key( size=16 ):
     return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(size))
