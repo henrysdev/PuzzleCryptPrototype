@@ -39,6 +39,7 @@ def subdivide_file(file_bytes, n):
     pieces = []
 
     pieces.append(bytes(file_bytes[0:frag_size]))
+    i=0
     for i in range(1,n-1):
         pieces.append(bytes(file_bytes[frag_size*i:(frag_size*(i+1))]))
     pieces.append(bytes(file_bytes[frag_size*(i+1):]))
@@ -90,7 +91,7 @@ def authenticate_fragments(fragments):
 
 
 def reassemble(argv):
-    secret_key = "V5ZHJSAWENPO3W6N" #DEBUG KEY
+    secret_key = "0DGCST8P8OYMT6GA" #DEBUG KEY
     # argument handling
     success_fpath = argv[1]
     fragments = []

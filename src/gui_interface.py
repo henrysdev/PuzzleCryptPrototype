@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter.filedialog import askopenfilename, askdirectory
 from master_frag import *
 import time
-import os
+import os.path
 
 src_fr_filename = "/PATH/TO/INPUT/FILE"
 dest_fr_location = os.path.dirname(os.path.realpath(__file__)) + '/OUT_FOLDER/'
@@ -18,10 +18,12 @@ class Demo1:
         self.e1_label = Label(master, text="Input file: ")
         self.e1_btn = Button(master, text="Choose File", command=self.pick_file)
         self.e1_path = Entry(master, width=56, fg="red")
+        self.e1_ERROR_field = Label(master, text="")
 
         self.e2_label = Label(master, text="Output destination: ")
         self.e2_btn = Button(master, text="Choose Folder", command=self.pick_folder)
         self.e2_path = Entry(master, width=56)
+        self.e2_ERROR_field = Label(master, text="")
 
         self.e3_label = Label(master, text="Number of fragments: ")
         self.e3_n_field = Entry(master, width=5)
@@ -30,16 +32,18 @@ class Demo1:
         self.e1_label.grid(row=1, column=0, sticky=W)
         self.e1_btn.grid(row=1, column=2)
         self.e1_path.grid(row=1, column=1)
+        self.e1_ERROR_field.grid(row=2, column=1)
 
-        self.e2_label.grid(row=2, column=0, sticky=W)
-        self.e2_btn.grid(row=2, column=2)
-        self.e2_path.grid(row=2, column=1)
+        self.e2_label.grid(row=3, column=0, sticky=W)
+        self.e2_btn.grid(row=3, column=2)
+        self.e2_path.grid(row=3, column=1)
+        self.e2_ERROR_field.grid(row=4, column=1)
 
-        self.e3_label.grid(row=3, column=0, sticky=W)
-        self.e3_n_field.grid(row=3, column=1, sticky=W)
-        self.e3_ERROR_field.grid(row=3, column=1)
+        self.e3_label.grid(row=5, column=0, sticky=W)
+        self.e3_n_field.grid(row=5, column=1, sticky=W)
+        self.e3_ERROR_field.grid(row=5, column=1)
 
-        self.frag_btn = Button(master, text="Fragment", width=30, command=self.frag_file).grid(row=4,column=1)
+        self.frag_btn = Button(master, text="Fragment", width=30, command=self.frag_file).grid(row=6,column=1)
 
         self.refresh()
 
@@ -52,18 +56,32 @@ class Demo1:
         self.e2_path.delete(0, 'end')
         self.e2_path.insert(0, dest_fr_location)
 
-    def frag_file(self):
+    def error_check(self):
         global n
+        if os.path.isfile(self.e1_path.get()):
+            src_fr_filename = self.e1_path.get()
+        else:
+            self.e1_ERROR_field.config(text="ERROR: input file not found", fg="red")
+            return False
+
+        if os.path.isdir(self.e2_path.get()):
+            dest_fr_location = self.e2_path.get()
+        else:
+            self.e2_ERROR_field.config(text="ERROR: output destination not found", fg="red")
+
         try:
             n = int(self.e3_n_field.get())
         except:
             self.e3_ERROR_field.config(text="ERROR: invalid input for number of fragments", fg="red")
-            return
-        n = int(self.e3_n_field.get())
-        print("input file: {}".format(src_fr_filename))
-        print("output location: {}".format(dest_fr_location))
-        print("n: {}".format(n))
-        partition_file(("python", src_fr_filename, n))
+            return False
+
+        return True
+
+
+    def frag_file(self):
+        if self.error_check():
+            n = int(self.e3_n_field.get())
+            partition_file(("python", src_fr_filename, n))
 
 
     def pick_file(self):
