@@ -12,6 +12,10 @@ def HMAC(secret_key, seqID):
 
     return hmac.encode('utf-8')
 
+def pword_to_key(pword):
+    phash = cryptographics.SHA256(bytes(pword.encode('utf-8')))
+    key = phash[-16:]
+    return key
 
 # encrypt a piece
 def encrypt_piece(piece, secret_key):
@@ -72,7 +76,7 @@ def partition_file(argv):
     path = argv[1]
     n = int(argv[2])
     #secret_key = cryptographics.generate_key(16)
-    secret_key = argv[3]
+    secret_key = pword_to_key(argv[3])
     # read in file
     file_bytes = read_in_file(path)
     # fragment
@@ -98,7 +102,7 @@ def authenticate_fragments(fragments):
 def reassemble(argv):
     # argument handling
     success_fpath = argv[1]
-    secret_key = argv[2]
+    secret_key = pword_to_key(argv[2])
     fragments = []
     if_path = "OUT_FOLDER/"
     frag_names = [x for x in os.listdir(if_path) if '.frg' in str(x)]

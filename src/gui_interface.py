@@ -1,10 +1,11 @@
 from tkinter import *
+from tkinter import font
 from tkinter.filedialog import askopenfilename, askdirectory
 import master_frag
 import time
 import os.path
 
-src_fr_filename = "/PATH/TO/INPUT/FILE"
+src_fr_filename = "< None >"
 dest_fr_location = os.path.dirname(os.path.realpath(__file__)) + "/OUT_FOLDER/"
 n = 4
 
@@ -19,12 +20,13 @@ class Demo1:
         root.title('PuzzleCrypt')
 
         # Fragmentation Window Area
-        frag_frame = LabelFrame(root, text=" Fragment File ")
+        title_font = font.Font(family="Helvetica", size=14, weight="bold")
+        frag_frame = LabelFrame(root, text=" Fragment File ", name="frag_frame", font=title_font)
         frag_frame.grid(row=0, sticky=W, \
-                 padx=5, pady=5, ipadx=5, ipady=5)
+                 padx=5, pady=5, ipadx=5, ipady=10)
 
         self.r1_label = Label(frag_frame, text="Input File: ", width=label_width)
-        self.r1_path = Entry(frag_frame, width=56) 
+        self.r1_path = Entry(frag_frame, width=56)
         self.r1_btn = Button(frag_frame, height=1, text="Browse...", command=self.pick_file) 
         self.r1_label.grid(row=0, column=0, padx=x_padding, pady=y_padding)
         self.r1_path.grid(row=0, column=1, padx=x_padding, pady=y_padding)
@@ -61,9 +63,9 @@ class Demo1:
         root.bind("<Key>", self.button_state)
 
         # Reassembly Window Area
-        reasm_frame = LabelFrame(root, text=" Reassemble Fragments ")
+        reasm_frame = LabelFrame(root, text=" Reassemble Fragments ", name="reasm_frame", font=title_font)
         reasm_frame.grid(row=2, sticky=W, \
-                     padx=5, pady=5, ipadx=5, ipady=5)
+                     padx=5, pady=10, ipadx=5, ipady=5)
 
         self.r7_label = Label(reasm_frame, text="Fragments Folder: ", width=label_width)
         self.r7_path = Entry(reasm_frame, width=56)
@@ -74,38 +76,45 @@ class Demo1:
 
         self.r8_label = Label(reasm_frame, text="Password: ")
         self.r8_pword_field = Entry(reasm_frame, width=14, show="*")
+        self.r8_label.grid(row=1, column=0, padx=x_padding, pady=y_padding)
         self.r8_pword_field.grid(row=1, column=1, sticky=W, padx=x_padding, pady=y_padding)
 
-        self.r8_label.grid(row=1, column=0, padx=x_padding, pady=y_padding)
-        self.r9_ERROR_field = Label(reasm_frame, text="")
-        self.r9_ERROR_field.grid(row=2, column=1, padx=x_padding, pady=y_padding)
+        self.r9_label = Label(reasm_frame, text="Output Filename: ")
+        self.r9_filename_field = Entry(reasm_frame, width=20)
+        self.r9_label.grid(row=2, column=0, padx=x_padding, pady=y_padding)
+        self.r9_filename_field.grid(row=2, column=1, sticky=W, padx=x_padding, pady=y_padding)
+
+        self.r10_ERROR_field = Label(reasm_frame, text="")
+        self.r10_ERROR_field.grid(row=3, column=1, padx=x_padding, pady=y_padding)
 
         self.reasm_btn = Button(reasm_frame, text="Reassemble", width=10, command=self.reasm_file, state=DISABLED)
-        self.reasm_btn.grid(row=3,column=1, padx=x_padding, pady=y_padding)
+        self.reasm_btn.grid(row=4,column=1, padx=x_padding, pady=y_padding)
 
         self.refresh(init=True)
     
     # button state refresh
-    def button_state(self, key):
-        if self.f_error_check():
-            self.frag_btn.config(state=NORMAL)
-        else:
-            self.frag_btn.config(state=DISABLED)
-
-        if self.r_error_check():
-            self.reasm_btn.config(state=NORMAL)
-        else:
-            self.reasm_btn.config(state=DISABLED)
+    def button_state(self, event):
+        parent = event.widget.winfo_parent()
+        if "frag_frame" in parent:
+            if self.f_error_check():
+                self.frag_btn.config(state=NORMAL)
+            else:
+                self.frag_btn.config(state=DISABLED)
+        elif "reasm_frame" in parent:
+            if self.r_error_check():
+                self.reasm_btn.config(state=NORMAL)
+            else:
+                self.reasm_btn.config(state=DISABLED)
 
     def f_clear_input(self):
         self.r1_path.delete(0, 'end')
-        self.r2_path.delete(0, 'end')
+        #self.r2_path.delete(0, 'end')
         self.r3_n_field.delete(0, 'end')
         self.r4_pword_field.delete(0,'end')
         self.r5_reenter_pword.delete(0, 'end')
 
     def r_clear_input(self):
-        self.r7_path.delete(0, 'end')
+        #self.r7_path.delete(0, 'end')
         self.r8_pword_field.delete(0, 'end')
 
     # update field entry values
@@ -156,7 +165,7 @@ class Demo1:
     # reassembly error check
     def r_error_check(self):
         if len(self.r8_pword_field.get()) == 0:
-            self.r9_ERROR_field.config(text="ERROR: must enter decryption password", fg="red")
+            self.r10_ERROR_field.config(text="ERROR: must enter decryption password", fg="red")
             return False
         return True
 
@@ -179,10 +188,10 @@ class Demo1:
             secret_key = self.r8_pword_field.get()
             output = master_frag.reassemble(("python", dest_fr_location, secret_key))
             if output[0]:
-                self.r9_ERROR_field.config(text=output[1], fg="green")
+                self.r10_ERROR_field.config(text=output[1], fg="green")
                 self.r_clear_input()
             else:
-                self.r9_ERROR_field.config(text=output[1], fg="red")
+                self.r10_ERROR_field.config(text=output[1], fg="red")
 
     # pick file from system file browser
     def pick_file(self):
@@ -205,7 +214,7 @@ def main():
     root = Tk()
     app = Demo1(root)
     root.resizable(width=False, height=False)
-    root.geometry('{}x{}'.format(826, 400))
+    #root.geometry('{}x{}'.format(826, 400))
     root.mainloop()
 
 if __name__ == '__main__':
