@@ -80,7 +80,7 @@ class Demo1:
         self.r9_ERROR_field = Label(reasm_frame, text="")
         self.r9_ERROR_field.grid(row=2, column=1, padx=x_padding, pady=y_padding)
 
-        self.reasm_btn = Button(reasm_frame, text="Reassemble", width=10, command=self.reasm_file)
+        self.reasm_btn = Button(reasm_frame, text="Reassemble", width=10, command=self.reasm_file, state=DISABLED)
         self.reasm_btn.grid(row=3,column=1, padx=x_padding, pady=y_padding)
 
         self.refresh(init=True)
@@ -92,6 +92,21 @@ class Demo1:
         else:
             self.frag_btn.config(state=DISABLED)
 
+        if self.r_error_check():
+            self.reasm_btn.config(state=NORMAL)
+        else:
+            self.reasm_btn.config(state=DISABLED)
+
+    def f_clear_input(self):
+        self.r1_path.delete(0, 'end')
+        self.r2_path.delete(0, 'end')
+        self.r3_n_field.delete(0, 'end')
+        self.r4_pword_field.delete(0,'end')
+        self.r5_reenter_pword.delete(0, 'end')
+
+    def r_clear_input(self):
+        self.r7_path.delete(0, 'end')
+        self.r8_pword_field.delete(0, 'end')
 
     # update field entry values
     def refresh(self, init=False):
@@ -154,6 +169,7 @@ class Demo1:
             output = master_frag.partition_file(("python", src_fr_filename, n, secret_key))
             if output[0]:
                 self.r6_ERROR_field.config(text=output[1], fg="green")
+                self.f_clear_input()
             else:
                 self.r6_ERROR_field.config(text=output[1], fg="red")
 
@@ -164,6 +180,7 @@ class Demo1:
             output = master_frag.reassemble(("python", dest_fr_location, secret_key))
             if output[0]:
                 self.r9_ERROR_field.config(text=output[1], fg="green")
+                self.r_clear_input()
             else:
                 self.r9_ERROR_field.config(text=output[1], fg="red")
 
