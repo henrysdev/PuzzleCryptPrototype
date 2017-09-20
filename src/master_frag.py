@@ -12,6 +12,10 @@ def HMAC(secret_key, seqID):
 
     return hmac.encode('utf-8')
 
+def pword_to_key(pword):
+    phash = cryptographics.SHA256(bytes(pword.encode('utf-8')))
+    key = phash[-16:]
+    return key
 
 # encrypt a piece
 def encrypt_piece(piece, secret_key):
@@ -50,26 +54,29 @@ def subdivide_file(file_bytes, n):
 def read_in_file(path_to_orig_file):
     with open(path_to_orig_file, 'rb') as f:
         file_bytes = f.read()
-    # must delete file after splitting
     f.close()
 
     return file_bytes
 
 
-def output_fragments(fragments):
+def output_n_cleanup(fragments, old_fp):
     for frag in fragments:
-        fpath = 'OUT_FOLDER/' + cryptographics.generate_key(8)
+        fpath = 'OUT_FOLDER/' + cryptographics.generate_key(8) + '.frg'
         with open(fpath, 'wb') as f:
             f.write(frag)
         f.close()
+    try:
+        os.remove(old_fp)
+    except:
+        print("Unable to delete: {}".format(old_fp))
 
 # main controller loop
 def partition_file(argv):
     # arguments
     path = argv[1]
     n = int(argv[2])
-    secret_key = cryptographics.generate_key(16)
-    print("SECRET KEY: {}".format(secret_key))
+    #secret_key = cryptographics.generate_key(16)
+    secret_key = pword_to_key(argv[3])
     # read in file
     file_bytes = read_in_file(path)
     # fragment
@@ -77,7 +84,9 @@ def partition_file(argv):
     # reassemble test
     fragments = prepare_pieces(file_pieces, secret_key)
 
-    output_fragments(fragments)
+    output_n_cleanup(fragments, path)
+
+    return (True, "Fragmentation successful")
 
 
 def authenticate_fragments(fragments):
@@ -91,12 +100,14 @@ def authenticate_fragments(fragments):
 
 
 def reassemble(argv):
-    secret_key = "0DGCST8P8OYMT6GA" #DEBUG KEY
     # argument handling
     success_fpath = argv[1]
+    secret_key = pword_to_key(argv[2])
     fragments = []
     if_path = "OUT_FOLDER/"
-    frag_names = os.listdir(if_path)
+    frag_names = [x for x in os.listdir(if_path) if '.frg' in str(x)]
+    if len(frag_names) == 0:
+        return (False, "No fragments found at location")
     for name in frag_names:
         with open(if_path + name, 'rb') as f:
             read_fragment = f.read()
@@ -114,17 +125,25 @@ def reassemble(argv):
                 retrieved_pieces.append(aes_cipher.decrypt(hmac_dict[next_frag]))
             except:
                 print("Decryption failed. Aborting.")
-                exit()
+                return (False, "Decryption failed.")
         else:
             print("Authentication failed. Aborting")
-            exit()
+            return (False, "Authentication failed.")
     reassembled_file = b''.join(retrieved_pieces)
-
-    print("Successful")
 
     with open("RASM_FOLDER/reassembled_file.txt", 'wb') as f:
         f.write(reassembled_file)
     f.close()
+
+    # delete used fragments
+    for old_frag in frag_names:
+        try:
+            os.remove(if_path + old_frag)
+        except:
+            print("Unable to delete: {}".format(if_path + old_frag))
+            return (True, "Unable to delete fragments after reassembly")
+
+    return (True, "Assembly successful")
 
 
 def validate_arguments(argv):
@@ -134,14 +153,16 @@ def validate_arguments(argv):
         print("<path_to_file_to_frag> <number_of_fragments>")
         exit()
     elif len(argv) == 2:
-        reassemble(argv)
+        output = reassemble(argv)
     elif len(argv) == 3:
         try:
             int(argv[2])
         except ValueError:
             print("Incorrect type of arguments. Format:")
             print("<(string) path_to_file_to_frag> <(int) number_of_fragments>")
-        partition_file(argv)
+        output = partition_file(argv)
+    if output[0]:
+        print(output[1])
 
 
 if __name__ == "__main__":
