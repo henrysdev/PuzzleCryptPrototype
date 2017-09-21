@@ -9,6 +9,8 @@ src_fr_filename = "< None >"
 dest_fr_location = os.path.dirname(os.path.realpath(__file__)) + "/OUT_FOLDER/"
 n = 4
 
+min_password_length = 10
+
 label_width = 18
 x_padding = 5
 y_padding = 2
@@ -150,8 +152,11 @@ class Demo1:
         except:
             self.r6_ERROR_field.config(text="ERROR: invalid input for number of fragments", fg="red")
             return False
+        if int(self.r3_n_field.get()) <= 1:
+            self.r6_ERROR_field.config(text="ERROR: invalid input for number of fragments", fg="red")
+            return False
 
-        if len(self.r4_pword_field.get()) > 10:
+        if len(self.r4_pword_field.get()) >= min_password_length:
             if self.r4_pword_field.get() != self.r5_reenter_pword.get():
                 self.r6_ERROR_field.config(text="ERROR: passwords do not match", fg="red")
                 return False
