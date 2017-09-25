@@ -39,24 +39,24 @@ class Demo1:
         self.r2_label = Label(frag_frame, text="Output Folder (for fragments): ", width=label_width)
         self.r2_path = Entry(frag_frame, width=56)
         self.r2_btn = Button(frag_frame, height=1, text="Browse...", command=self.pick_folder)
-        self.r2_label.grid(row=1, column=0, padx=x_padding, pady=y_padding)
-        self.r2_path.grid(row=1, column=1, padx=x_padding, pady=y_padding)
-        self.r2_btn.grid(row=1, column=2, padx=x_padding, pady=y_padding)
+        self.r2_label.grid(row=4, column=0, padx=x_padding, pady=y_padding)
+        self.r2_path.grid(row=4, column=1, padx=x_padding, pady=y_padding)
+        self.r2_btn.grid(row=4, column=2, padx=x_padding, pady=y_padding)
 
         self.r3_label = Label(frag_frame, text="Number of Fragments: ", width=label_width)
         self.r3_n_field = Entry(frag_frame, width=5)
-        self.r3_label.grid(row=2, column=0, padx=x_padding, pady=y_padding)
-        self.r3_n_field.grid(row=2, column=1, sticky=W, padx=x_padding, pady=y_padding)
+        self.r3_label.grid(row=1, column=0, padx=x_padding, pady=y_padding)
+        self.r3_n_field.grid(row=1, column=1, sticky=W, padx=x_padding, pady=y_padding)
 
         self.r4_label = Label(frag_frame, text="Encryption Password: ", width=label_width)
         self.r4_pword_field = Entry(frag_frame, show="*", width=14)
-        self.r4_label.grid(row=3, column=0, padx=x_padding, pady=y_padding)
-        self.r4_pword_field.grid(row=3, column=1, sticky=W, padx=x_padding, pady=y_padding)
+        self.r4_label.grid(row=2, column=0, padx=x_padding, pady=y_padding)
+        self.r4_pword_field.grid(row=2, column=1, sticky=W, padx=x_padding, pady=y_padding)
 
         self.r5_label = Label (frag_frame, text="Re-enter Password: ", width=label_width)
         self.r5_reenter_pword = Entry(frag_frame, show="*", width=14)
-        self.r5_label.grid(row=4, column=0, padx=x_padding, pady=y_padding)
-        self.r5_reenter_pword.grid(row=4, column=1, sticky=W, padx=x_padding, pady=y_padding)
+        self.r5_label.grid(row=3, column=0, padx=x_padding, pady=y_padding)
+        self.r5_reenter_pword.grid(row=3, column=1, sticky=W, padx=x_padding, pady=y_padding)
 
         self.r6_ERROR_field = Label(frag_frame, text="")
         self.r6_ERROR_field.grid(row=5, column=1, padx=x_padding, pady=y_padding)
@@ -89,11 +89,16 @@ class Demo1:
         self.r9_label.grid(row=2, column=0, padx=x_padding, pady=y_padding)
         self.r9_path.grid(row=2, column=1, sticky=W, padx=x_padding, pady=y_padding)
 
-        self.r10_ERROR_field = Label(reasm_frame, text="")
-        self.r10_ERROR_field.grid(row=3, column=1, padx=x_padding, pady=y_padding)
+        self.r10_label = Label(reasm_frame, text="Output Filename (with .extension): ")
+        self.r10_filename_field = Entry(reasm_frame, width=14)
+        self.r10_label.grid(row=3, column=0, padx=x_padding, pady=y_padding)
+        self.r10_filename_field.grid(row=3, column=1, sticky=W, padx=x_padding, pady=y_padding)
+
+        self.r11_ERROR_field = Label(reasm_frame, text="")
+        self.r11_ERROR_field.grid(row=4, column=1, padx=x_padding, pady=y_padding)
 
         self.reasm_btn = Button(reasm_frame, text="Reassemble", width=10, command=self.reasm_file, state=DISABLED)
-        self.reasm_btn.grid(row=4,column=1, padx=x_padding, pady=y_padding)
+        self.reasm_btn.grid(row=5,column=1, padx=x_padding, pady=y_padding)
 
         self.refresh(init=True)
     
@@ -176,7 +181,15 @@ class Demo1:
     # reassembly error check
     def r_error_check(self):
         if len(self.r8_pword_field.get()) == 0:
-            self.r10_ERROR_field.config(text="ERROR: must enter decryption password", fg="red")
+            self.r11_ERROR_field.config(text="ERROR: must enter decryption password", fg="red")
+            return False
+
+        if os.path.isdir(self.r9_path.get()) == False:
+            self.r11_ERROR_field.config(text="ERROR: output destination not found", fg="red")
+            return False
+
+        if len(self.r10_filename_field.get()) == 0:
+            self.r11_ERROR_field.config(text="ERROR: must enter an output filename", fg="red")
             return False
         return True
 
@@ -198,12 +211,13 @@ class Demo1:
     def reasm_file(self):
         if self.r_error_check():
             secret_key = self.r8_pword_field.get()
-            output = master_frag.reassemble(("python", dest_fr_location, secret_key, final_dest_re_location))
+            filename = self.r10_filename_field.get()
+            output = master_frag.reassemble(("python", dest_fr_location, secret_key, final_dest_re_location, filename))
             if output[0]:
-                self.r10_ERROR_field.config(text=output[1], fg="green")
+                self.r11_ERROR_field.config(text=output[1], fg="green")
                 self.r_clear_input()
             else:
-                self.r10_ERROR_field.config(text=output[1], fg="red")
+                self.r11_ERROR_field.config(text=output[1], fg="red")
 
     # pick file from system file browser
     def pick_file(self):

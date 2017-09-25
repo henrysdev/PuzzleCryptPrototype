@@ -1,8 +1,6 @@
 import sys
 import os
 import cryptographics
-# DEBUG modules
-import time
 
 
 # create and append a SHA256 HMAC for authentication
@@ -58,6 +56,9 @@ def read_in_file(path_to_orig_file):
 
     return file_bytes
 
+
+
+
 # write fragments to destination directory
 def output_n_cleanup(fragments, old_fp, output_dir):
     for frag in fragments:
@@ -75,7 +76,7 @@ def partition_file(argv):
     # arguments
     if_path = argv[1]
     n = int(argv[2])
-    #secret_key = cryptographics.generate_key(16)
+    # secret_key = cryptographics.generate_key(16)
     secret_key = pword_to_key(argv[3])
     output_dir = argv[4]
     # read in file
@@ -84,7 +85,7 @@ def partition_file(argv):
     file_pieces = subdivide_file(file_bytes, n)
     # reassemble test
     fragments = prepare_pieces(file_pieces, secret_key)
-
+    # output fragments and delete old file
     output_n_cleanup(fragments, if_path, output_dir)
 
     return (True, "Fragmentation successful")
@@ -106,6 +107,7 @@ def reassemble(argv):
     if_path = argv[1]
     secret_key = pword_to_key(argv[2])
     success_fpath = argv[3]
+    new_filename = argv[4]
 
     fragments = []
     frag_names = [x for x in os.listdir(if_path) if '.frg' in str(x)]
@@ -119,7 +121,7 @@ def reassemble(argv):
     hmac_dict = authenticate_fragments(fragments)
 
     retrieved_pieces = []
-    
+
     i = 0
     while HMAC(secret_key, i) in hmac_dict:
         next_frag = HMAC(secret_key, i)
@@ -136,7 +138,7 @@ def reassemble(argv):
         i+=1
     reassembled_file = b''.join(retrieved_pieces)
 
-    with open(success_fpath + "/reassembled_file.txt", 'wb') as f:
+    with open(success_fpath + new_filename, 'wb') as f:
         f.write(reassembled_file)
     f.close()
 
