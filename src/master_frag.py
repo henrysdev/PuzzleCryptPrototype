@@ -1,8 +1,6 @@
 import sys
 import os
 import cryptographics
-# DEBUG modules
-import time
 
 
 # create and append a SHA256 HMAC for authentication
@@ -59,9 +57,12 @@ def read_in_file(path_to_orig_file):
     return file_bytes
 
 
-def output_n_cleanup(fragments, old_fp):
+
+
+# write fragments to destination directory
+def output_n_cleanup(fragments, old_fp, output_dir):
     for frag in fragments:
-        fpath = 'OUT_FOLDER/' + cryptographics.generate_key(8) + '.frg'
+        fpath = output_dir + cryptographics.generate_key(8) + '.frg'
         with open(fpath, 'wb') as f:
             f.write(frag)
         f.close()
@@ -70,25 +71,26 @@ def output_n_cleanup(fragments, old_fp):
     except:
         print("Unable to delete: {}".format(old_fp))
 
-# main controller loop
+# master function for fragmentation
 def partition_file(argv):
     # arguments
-    path = argv[1]
+    if_path = argv[1]
     n = int(argv[2])
-    #secret_key = cryptographics.generate_key(16)
+    # secret_key = cryptographics.generate_key(16)
     secret_key = pword_to_key(argv[3])
+    output_dir = argv[4]
     # read in file
-    file_bytes = read_in_file(path)
+    file_bytes = read_in_file(if_path)
     # fragment
     file_pieces = subdivide_file(file_bytes, n)
     # reassemble test
     fragments = prepare_pieces(file_pieces, secret_key)
-
-    output_n_cleanup(fragments, path)
+    # output fragments and delete old file
+    output_n_cleanup(fragments, if_path, output_dir)
 
     return (True, "Fragmentation successful")
 
-
+# obtain hmac value for each fragment
 def authenticate_fragments(fragments):
     hmac_dict = {}
     for frag in fragments:
@@ -98,13 +100,16 @@ def authenticate_fragments(fragments):
 
     return hmac_dict
 
-
+# main function for reassembly
 def reassemble(argv):
-    # argument handling
-    success_fpath = argv[1]
+    # arguments
+    
+    if_path = argv[1]
     secret_key = pword_to_key(argv[2])
+    success_fpath = argv[3]
+    new_filename = argv[4]
+
     fragments = []
-    if_path = "OUT_FOLDER/"
     frag_names = [x for x in os.listdir(if_path) if '.frg' in str(x)]
     if len(frag_names) == 0:
         return (False, "No fragments found at location")
@@ -116,8 +121,9 @@ def reassemble(argv):
     hmac_dict = authenticate_fragments(fragments)
 
     retrieved_pieces = []
-    n = len(fragments)
-    for i in range(0,n):
+
+    i = 0
+    while HMAC(secret_key, i) in hmac_dict:
         next_frag = HMAC(secret_key, i)
         if next_frag in hmac_dict:
             aes_cipher = cryptographics.AESCipher(secret_key)
@@ -129,9 +135,10 @@ def reassemble(argv):
         else:
             print("Authentication failed. Aborting")
             return (False, "Authentication failed.")
+        i+=1
     reassembled_file = b''.join(retrieved_pieces)
 
-    with open("RASM_FOLDER/reassembled_file.txt", 'wb') as f:
+    with open(success_fpath + new_filename, 'wb') as f:
         f.write(reassembled_file)
     f.close()
 
