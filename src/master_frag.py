@@ -136,6 +136,10 @@ def reassemble(argv):
             print("Authentication failed. Aborting")
             return (False, "Authentication failed.")
         i+=1
+
+    if len(retrieved_pieces) == 0:
+        return (False, "Authentication failed.")
+        
     reassembled_file = b''.join(retrieved_pieces)
 
     with open(success_fpath + new_filename, 'wb') as f:

@@ -8,10 +8,6 @@ import os.path
 import platform
 
 system_type = platform.system()
-# if system_type== "Darwin":
-#     self.r9_path.config(text='/Users/' + getpass.getuser() + '/Desktop/')
-# elif system_type == "Linux":
-#     self.r9_path.config(text='/home/' + getpass.getuser() + '/Desktop/')
 
 n = 4
 
@@ -29,6 +25,7 @@ class Demo1:
 
         # Fragmentation Window Area
         title_font = font.Font(family="Helvetica", size=14, weight="bold")
+
         frag_frame = LabelFrame(root, text=" Fragment File ", name="frag_frame", font=title_font)
         frag_frame.grid(row=0, sticky=W, \
                  padx=5, pady=5, ipadx=5, ipady=10)
@@ -71,7 +68,7 @@ class Demo1:
         root.bind("<Key>", self.button_state)
 
         # Reassembly Window Area
-        reasm_frame = LabelFrame(root, text=" Reassemble Fragments ", name="reasm_frame", font=title_font)
+        reasm_frame = LabelFrame(root, text=" Reassemble File ", name="reasm_frame", font=title_font)
         reasm_frame.grid(row=2, sticky=W, \
                      padx=5, pady=10, ipadx=5, ipady=5)
 
@@ -125,13 +122,17 @@ class Demo1:
                 self.reasm_btn.config(state=DISABLED)
 
     def f_clear_input(self):
-        self.r1_path.delete(0, 'end')
-        self.r2_n_field.delete(0, 'end')
-        self.r3_pword_field.delete(0,'end')
-        self.r4_reenter_pword.delete(0, 'end')
+        self.r1_path.delete(0, END)
+        self.r2_n_field.delete(0, END)
+        self.r3_pword_field.delete(0,END)
+        self.r4_reenter_pword.delete(0, END)
+        self.r5_path.delete(0, END)
 
     def r_clear_input(self):
-        self.r8_pword_field.delete(0, 'end')
+        self.r7_path.delete(0, END)
+        self.r8_pword_field.delete(0, END)
+        self.r9_path.delete(0, END)
+        self.r10_filename_field.delete(0, END)
 
     # fragmentation error check
     def f_error_check(self):
@@ -144,6 +145,7 @@ class Demo1:
         except:
             self.r6_ERROR_field.config(text="ERROR: invalid input for number of fragments", fg="red")
             return False
+
         if int(self.r2_n_field.get()) <= 1 or int(self.r2_n_field.get()) > 99:
             self.r6_ERROR_field.config(text="ERROR: number of fragments must be an integer between 2 and 99", fg="red")
             return False
@@ -156,7 +158,6 @@ class Demo1:
             self.r6_ERROR_field.config(text="ERROR: password must be at least 10 characters", fg="red")
             return False
 
-        print(self.r5_path.get())
         if os.path.isdir(self.r5_path.get()) == False:
             self.r6_ERROR_field.config(text="ERROR: output destination not found", fg="red")
             return False
@@ -175,8 +176,10 @@ class Demo1:
             return False
 
         if len(self.r10_filename_field.get()) == 0:
-            self.r11_ERROR_field.config(text="ERROR: must enter an output filename", fg="red")
+            self.r11_ERROR_field.config(text="ERROR: must enter an output filename (ex: myfile.txt)", fg="red")
             return False
+
+        self.r11_ERROR_field.config(text="")
         return True
 
     # call fragmentation function in master
@@ -188,7 +191,7 @@ class Demo1:
             dest_loc = self.r5_path.get()
             output = master_frag.partition_file(("python", src_file, n, secret_key, dest_loc))
             if output[0]:
-                self.r6_ERROR_field.config(text=output[1], fg="green")
+                self.r6_ERROR_field.config(text=str(output[1] + ":    {0}".format(dest_loc)), fg="green")
                 self.f_clear_input()
             else:
                 self.r6_ERROR_field.config(text=output[1], fg="red")
@@ -198,10 +201,11 @@ class Demo1:
         if self.r_error_check():
             secret_key = self.r8_pword_field.get()
             filename = self.r10_filename_field.get()
-            input_loc = self.r5_path.get()
-            output = master_frag.reassemble(("python", input_loc, secret_key, self.r9_path.get(), filename))
+            input_loc = self.r7_path.get()
+            output_loc = self.r9_path.get()
+            output = master_frag.reassemble(("python", input_loc, secret_key, output_loc, filename))
             if output[0]:
-                self.r11_ERROR_field.config(text=output[1], fg="green")
+                self.r11_ERROR_field.config(text=str(output[1] + ":    {0}{1}".format(output_loc, filename)), fg="green")
                 self.r_clear_input()
             else:
                 self.r11_ERROR_field.config(text=output[1], fg="red")
@@ -209,7 +213,7 @@ class Demo1:
     # pick file from system file browser
     def pick_file(self):
         selected_filename = askopenfilename()
-        self.r1_path.delete(0)
+        self.r1_path.delete(0, END)
         self.r1_path.insert(0, selected_filename)
         if self.f_error_check():
             self.frag_btn.config(state=NORMAL)
@@ -219,7 +223,7 @@ class Demo1:
     # pick folder from system file browser
     def pick_o_folder(self):
         selected_dir = askdirectory() + '/'
-        self.r5_path.delete(0)
+        self.r5_path.delete(0, END)
         self.r5_path.insert(0, selected_dir)
         if self.f_error_check():
             self.frag_btn.config(state=NORMAL)
@@ -229,7 +233,7 @@ class Demo1:
     # pick folder from system file browser
     def pick_i_folder(self):
         selected_dir = askdirectory() + '/'
-        self.r7_path.delete(0)
+        self.r7_path.delete(0, END)
         self.r7_path.insert(0, selected_dir)
         if self.r_error_check():
             self.reasm_btn.config(state=NORMAL)
@@ -240,7 +244,7 @@ class Demo1:
     def pick_final_folder(self):
         print("called")
         selected_dir = askdirectory() + '/'
-        self.r9_path.delete(0)
+        self.r9_path.delete(0, END)
         self.r9_path.insert(0, selected_dir)
         if self.r_error_check():
             self.reasm_btn.config(state=NORMAL)
