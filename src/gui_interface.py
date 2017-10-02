@@ -205,7 +205,7 @@ class Demo1:
             output_loc = self.r9_path.get()
             output = master_frag.reassemble(("python", input_loc, secret_key, output_loc, filename))
             if output[0]:
-                self.r11_ERROR_field.config(text=str(output[1] + ":    {0}/{1}".format(output_loc, filename)), fg="green")
+                self.r11_ERROR_field.config(text=str(output[1] + ":    {0}{1}".format(output_loc, filename)), fg="green")
                 self.r_clear_input()
             else:
                 self.r11_ERROR_field.config(text=output[1], fg="red")
