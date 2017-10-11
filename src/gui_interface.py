@@ -242,7 +242,6 @@ class Demo1:
 
     # pick folder from system file browser for final output
     def pick_final_folder(self):
-        print("called")
         selected_dir = askdirectory() + '/'
         self.r9_path.delete(0, END)
         self.r9_path.insert(0, selected_dir)

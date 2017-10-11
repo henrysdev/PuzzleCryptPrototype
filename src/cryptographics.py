@@ -15,7 +15,6 @@ unpad = lambda s : s[:-ord(s[len(s)-1:])]
 class AESCipher:
     def __init__( self, key ):
         if len(key) != BS:
-            print("incorrect key length... padding for you")
             key = pad(key)
         self.key = key
 
